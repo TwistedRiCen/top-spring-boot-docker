@@ -27,12 +27,6 @@ COPY ${JAR_FILE} target/application.jar
 # 使用 JAR 的 layertools 命令提取 JAR 文件的各个部分
 RUN java -Djarmode=layertools -jar target/application.jar extract --destination target/extracted
 
-# 查看构建生成的文件是否在 target 目录中
-RUN ls -l /workspace/app/target
-
-# 复制 Maven 构建生成的所有文件到容器中
-COPY target target
-
 # 第二阶段：运行阶段
 FROM arnfi1150/17-jdk-alpine
 
