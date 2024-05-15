@@ -1,11 +1,4 @@
-
-# 定义 Dockerfile 语法版本，使用实验性特性
-# 指定了要使用的基础镜像是 Docker 官方的 experimental 版本
-# experimental 版本支持更高级的构建功能
-# syntax=docker/dockerfile:experimental
-
 # 第一阶段：构建阶段
-# 使用 eclipse-temurin 17 版本的 JDK Alpine 作为基础镜像，并命名为 build
 FROM arnfi1150/17-jdk-alpine as build
 
 # 设置工作目录
@@ -34,8 +27,13 @@ COPY ${JAR_FILE} target/application.jar
 # 使用 JAR 的 layertools 命令提取 JAR 文件的各个部分
 RUN java -Djarmode=layertools -jar target/application.jar extract --destination target/extracted
 
+# 查看构建生成的文件是否在 target 目录中
+RUN ls -l /workspace/app/target
+
+# 复制 Maven 构建生成的所有文件到容器中
+COPY target target
+
 # 第二阶段：运行阶段
-# 使用 eclipse-temurin 17 版本的 JDK Alpine 作为基础镜像
 FROM arnfi1150/17-jdk-alpine
 
 # 添加一个名为 demo 的用户和组
