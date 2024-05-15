@@ -6,7 +6,7 @@
 
 # 第一阶段：构建阶段
 # 使用 eclipse-temurin 17 版本的 JDK Alpine 作为基础镜像，并命名为 build
-FROM eclipse-temurin:17-jdk-alpine as build
+FROM arnfi1150/17-jdk-alpine as build
 
 # 设置工作目录
 WORKDIR /workspace/app
@@ -36,7 +36,7 @@ RUN java -Djarmode=layertools -jar target/application.jar extract --destination 
 
 # 第二阶段：运行阶段
 # 使用 eclipse-temurin 17 版本的 JDK Alpine 作为基础镜像
-FROM eclipse-temurin:17-jdk-alpine
+FROM arnfi1150/17-jdk-alpine
 
 # 添加一个名为 demo 的用户和组
 RUN addgroup -S demo && adduser -S demo -G demo
