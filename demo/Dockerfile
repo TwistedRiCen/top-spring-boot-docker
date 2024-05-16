@@ -7,25 +7,20 @@ WORKDIR /workspace/app
 # 将 Maven Wrapper 文件复制到工作目录
 COPY mvnw .
 COPY .mvn .mvn
-
-# 复制项目的 pom.xml 文件
 COPY pom.xml .
-
-# 复制项目的 src 目录
 COPY src src
 
 # 使用 Maven Wrapper 执行 Maven 构建，并将依赖安装到本地仓库
-# 这里使用了 Docker 的缓存技术，将 Maven 依赖缓存到 /root/.m2 目录中
 RUN --mount=type=cache,target=/root/.m2 ./mvnw install -DskipTests
 
-# 定义一个参数 JAR_FILE，用于指定要复制的 JAR 文件路径
-ARG JAR_FILE=target/*.jar
+# 调试信息：列出 target 目录内容
+RUN ls -l target
 
-# 将构建生成的可执行 JAR 文件复制到 target 目录
-COPY ${JAR_FILE} target/application.jar
+# 将构建生成的可执行 JAR 文件复制到工作目录
+RUN cp target/docker-demo-0.0.1-SNAPSHOT.jar application.jar
 
 # 使用 JAR 的 layertools 命令提取 JAR 文件的各个部分
-RUN java -Djarmode=layertools -jar target/application.jar extract --destination target/extracted
+RUN java -Djarmode=layertools -jar application.jar extract --destination extracted
 
 # 第二阶段：运行阶段
 FROM arnfi1150/17-jdk-alpine
@@ -39,19 +34,14 @@ VOLUME /tmp
 # 切换到 demo 用户
 USER demo
 
-# 定义一个参数 EXTRACTED，用于指定提取出来的 JAR 文件的路径
-ARG EXTRACTED=/workspace/app/target/extracted
-
 # 设置工作目录为 application
 WORKDIR application
 
-# 从构建阶段复制各个部分的文件到当前镜像的工作目录
-COPY --from=build ${EXTRACTED}/dependencies/ ./
-COPY --from=build ${EXTRACTED}/spring-boot-loader/ ./
-COPY --from=build ${EXTRACTED}/snapshot-dependencies/ ./
-COPY --from=build ${EXTRACTED}/application/ ./
+# 从构建阶段复制提取的文件`
+COPY --from=build /workspace/app/extracted/dependencies/ ./
+COPY --from=build /workspace/app/extracted/spring-boot-loader/ ./
+COPY --from=build /workspace/app/extracted/snapshot-dependencies/ ./
+COPY --from=build /workspace/app/extracted/application/ ./
 
 # 定义入口点，指定了运行 Spring Boot 应用程序的命令
 ENTRYPOINT ["java","-noverify","-XX:TieredStopAtLevel=1","-Dspring.main.lazy-initialization=true","org.springframework.boot.loader.JarLauncher"]
-
-
